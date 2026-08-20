@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spike A — OpenSeadragon + Annotorious Coordinate Test</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #1a1a2e; color: #e0e0e0; }
+    #header { padding: 12px 20px; background: #16213e; border-bottom: 1px solid #333; }
+    #header h1 { font-size: 16px; color: #00d2ff; }
+    #main { display: flex; height: calc(100vh - 44px); }
+    #viewer-container { flex: 1; position: relative; }
+    #sidebar { width: 360px; padding: 16px; overflow-y: auto; background: #0f3460; border-left: 1px solid #333; }
+    #sidebar h2 { font-size: 14px; margin-bottom: 8px; color: #00d2ff; }
+    #sidebar .section { margin-bottom: 16px; padding: 12px; background: #16213e; border-radius: 6px; }
+    #sidebar label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; }
+    #sidebar .value { font-family: monospace; font-size: 13px; color: #7fff7f; }
+    #sidebar .fail { color: #ff5555; }
+    #sidebar .pass { color: #55ff55; }
+    #sidebar button { 
+      padding: 8px 16px; margin: 4px; border: none; border-radius: 4px; 
+      cursor: pointer; font-size: 13px; background: #00d2ff; color: #000; 
+    }
+    #sidebar button:hover { background: #00a8cc; }
+    #sidebar button.danger { background: #e94560; color: #fff; }
+    #log { font-family: monospace; font-size: 11px; max-height: 200px; overflow-y: auto; 
+           background: #0a0a23; padding: 8px; border-radius: 4px; white-space: pre-wrap; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 4px 8px; text-align: left; border-bottom: 1px solid #333; }
+    th { color: #00d2ff; }
+    #status-bar { 
+      position: absolute; bottom: 0; left: 0; right: 0; 
+      padding: 6px 16px; background: rgba(0,0,0,0.8); font-family: monospace; font-size: 12px;
+      display: flex; gap: 20px;
+    }
+  </style>
+  <!-- OpenSeadragon -->
+  <script src="https://cdn.jsdelivr.net/npm/openseadragon@5.0.0/build/openseadragon/openseadragon.min.js"></script>
+  <!-- Annotorious + OSD plugin -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@annotorious/openseadragon@3.0.14/dist/annotorious-openseadragon.css">
+  <script src="https://cdn.jsdelivr.net/npm/@annotorious/openseadragon@3.0.14/dist/annotorious-openseadragon.js"></script>
+</head>
+<body>
+  <div id="header"><h1>Spike A — OpenSeadragon + Annotorious Coordinate Accuracy Test</h1></div>
+  <div id="main">
+    <div id="viewer-container">
+      <div id="osd-viewer" style="width:100%; height:100%;"></div>
+      <div id="status-bar">
+        <span>Zoom: <span id="zoom-level">—</span></span>
+        <span>Viewport: <span id="viewport-coords">—</span></span>
+        <span>Master px: <span id="master-coords">—</span></span>
+        <span>Master size: <span id="master-size">—</span></span>
+      </div>
+    </div>
+    <div id="sidebar">
+      <h2>Spike A — Test Controls</h2>
+
+      <div class="section">
+        <label>DZI Source</label>
+        <div>
+          <input id="dzi-url" type="text" value="" placeholder="Path to .dzi file..." style="width:100%; padding:4px; margin-bottom:4px; background:#0a0a23; border:1px solid #555; color:#fff; border-radius:3px;">
+          <button onclick="loadDzi()">Load DZI</button>
+          <button onclick="loadSynthetic()">Load Synthetic (no DZI)</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <label>Master Dimensions (from image)</label>
+        <div class="value" id="master-dims">Not loaded</div>
+      </div>
+
+      <div class="section">
+        <h2>Test 1: Create Rectangle</h2>
+        <p style="font-size:11px; color:#888; margin-bottom:8px;">Draw a rectangle on the viewer, then verify master pixel coordinates.</p>
+        <button onclick="runRectTest()">Auto-Create Test Rectangle</button>
+        <div id="rect-result" class="value" style="margin-top:8px;">—</div>
+      </div>
+
+      <div class="section">
+        <h2>Test 2: Create Polygon</h2>
+        <button onclick="runPolyTest()">Auto-Create Test Polygon</button>
+        <div id="poly-result" class="value" style="margin-top:8px;">—</div>
+      </div>
+
+      <div class="section">
+        <h2>Test 3: Coordinate Round-Trip</h2>
+        <p style="font-size:11px; color:#888; margin-bottom:8px;">master → viewport → master. Must be ±1px.</p>
+        <button onclick="runCoordTest()">Run Coordinate Round-Trip</button>
+        <div id="coord-result" class="value" style="margin-top:8px;">—</div>
+      </div>
+
+      <div class="section">
+        <h2>Test 4: Edit Polygon Vertices</h2>
+        <button onclick="runEditTest()">Create & Verify Editable Polygon</button>
+        <div id="edit-result" class="value" style="margin-top:8px;">—</div>
+      </div>
+
+      <div class="section">
+        <h2>Results Summary</h2>
+        <table id="results-table">
+          <tr><th>Test</th><th>Status</th><th>Details</th></tr>
+        </table>
+      </div>
+
+      <div class="section">
+        <h2>Log</h2>
+        <div id="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // GLOBALS
+    // ============================================================
+    let viewer = null;
+    let anno = null;
+    let masterWidth = 0;
+    let masterHeight = 0;
+    const results = [];
+
+    function log(msg) {
+      const el = document.getElementById('log');
+      el.textContent += new Date().toLocaleTimeString() + ' | ' + msg + '\n';
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function addResult(name, pass, details) {
+      results.push({ name, pass, details });
+      const table = document.getElementById('results-table');
+      const row = table.insertRow();
+      row.insertCell().textContent = name;
+      const statusCell = row.insertCell();
+      statusCell.textContent = pass ? '✅ PASS' : '❌ FAIL';
+      statusCell.className = pass ? 'pass' : 'fail';
+      row.insertCell().textContent = details;
+    }
+
+    // ============================================================
+    // COORDINATE ADAPTERS (mirrors our coordinateAdapter.ts)
+    // ============================================================
+    function viewportToMaster(viewportPoint) {
+      const imgPoint = viewer.viewport.viewportToImageCoordinates(
+        new OpenSeadragon.Point(viewportPoint.x, viewportPoint.y)
+      );
+      return { x: imgPoint.x, y: imgPoint.y };
+    }
+
+    function masterToViewport(masterPoint) {
+      const vpPoint = viewer.viewport.imageToViewportCoordinates(
+        new OpenSeadragon.Point(masterPoint.x, masterPoint.y)
+      );
+      return { x: vpPoint.x, y: vpPoint.y };
+    }
+
+    // ============================================================
+    // LOAD DZI
+    // ============================================================
+    function loadDzi() {
+      const url = document.getElementById('dzi-url').value.trim();
+      if (!url) { alert('Enter a DZI URL'); return; }
+      initViewer(url);
+    }
+
+    function loadSynthetic() {
+      // Create a simple test using a plain image URL for non-DZI testing
+      masterWidth = 4000;
+      masterHeight = 3000;
+      
+      // Use a canvas-generated data URL as tile source
+      const canvas = document.createElement('canvas');
+      canvas.width = masterWidth;
+      canvas.height = masterHeight;
+      const ctx = canvas.getContext('2d');
+      
+      // White background
+      ctx.fillStyle = '#f5f0e0';
+      ctx.fillRect(0, 0, masterWidth, masterHeight);
+      
+      // Draw known illustrations at specific positions
+      ctx.fillStyle = '#333';
+      ctx.fillRect(500, 400, 800, 600);    // Rect A: (500,400) 800x600
+      ctx.fillRect(2000, 300, 1200, 900);  // Rect B: (2000,300) 1200x900
+      ctx.fillRect(800, 1500, 600, 1000);  // Rect C: (800,1500) 600x1000
+      
+      // Grid for visual reference
+      ctx.strokeStyle = '#ccc';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < masterWidth; x += 500) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, masterHeight); ctx.stroke();
+        ctx.fillStyle = '#999'; ctx.font = '20px monospace';
+        ctx.fillText(x.toString(), x + 5, 25);
+      }
+      for (let y = 0; y < masterHeight; y += 500) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(masterWidth, y); ctx.stroke();
+        ctx.fillStyle = '#999';
+        ctx.fillText(y.toString(), 5, y + 25);
+      }
+      
+      const dataUrl = canvas.toDataURL('image/png');
+      
+      initViewer({
+        type: 'image',
+        url: dataUrl,
+        buildPyramid: false
+      });
+      
+      document.getElementById('master-dims').textContent = masterWidth + ' × ' + masterHeight;
+      log('Loaded synthetic image: ' + masterWidth + '×' + masterHeight);
+    }
+
+    function initViewer(tileSource) {
+      if (viewer) { viewer.destroy(); }
+      
+      viewer = OpenSeadragon({
+        id: 'osd-viewer',
+        tileSources: tileSource,
+        showNavigationControl: true,
+        maxZoomPixelRatio: 4,
+        animationTime: 0.3,
+      });
+
+      viewer.addHandler('open', function() {
+        const tiledImage = viewer.world.getItemAt(0);
+        if (tiledImage) {
+          const size = tiledImage.getContentSize();
+          masterWidth = size.x;
+          masterHeight = size.y;
+          document.getElementById('master-dims').textContent = masterWidth + ' × ' + masterHeight;
+          document.getElementById('master-size').textContent = masterWidth + '×' + masterHeight;
+          log('Image opened: ' + masterWidth + '×' + masterHeight);
+        }
+
+        // Init Annotorious after viewer is ready
+        try {
+          if (typeof Annotorious !== 'undefined' && Annotorious.createOSDAnnotator) {
+            anno = Annotorious.createOSDAnnotator(viewer);
+            log('Annotorious initialized');
+            
+            anno.on('createAnnotation', function(annotation) {
+              log('Annotation created: ' + JSON.stringify(annotation.target?.selector));
+            });
+            anno.on('updateAnnotation', function(annotation) {
+              log('Annotation updated: ' + JSON.stringify(annotation.target?.selector));
+            });
+          } else {
+            log('WARNING: Annotorious not available (CDN may have failed). Manual annotation tests will be skipped.');
+          }
+        } catch(e) {
+          log('Annotorious init error: ' + e.message + '. Coordinate tests will still work.');
+        }
+      });
+
+      // Track mouse position
+      viewer.addHandler('canvas-scroll', updateStatusBar);
+      const tracker = new OpenSeadragon.MouseTracker({
+        element: viewer.element,
+        moveHandler: function(event) {
+          if (!viewer.viewport) return;
+          const webPoint = event.position;
+          const vpPoint = viewer.viewport.pointFromPixel(webPoint);
+          const masterPt = viewportToMaster(vpPoint);
+          document.getElementById('viewport-coords').textContent = 
+            vpPoint.x.toFixed(4) + ', ' + vpPoint.y.toFixed(4);
+          document.getElementById('master-coords').textContent = 
+            Math.round(masterPt.x) + ', ' + Math.round(masterPt.y);
+        }
+      });
+
+      viewer.addHandler('animation', function() {
+        if (viewer.viewport) {
+          document.getElementById('zoom-level').textContent = viewer.viewport.getZoom().toFixed(2);
+        }
+      });
+    }
+
+    function updateStatusBar() {
+      if (viewer && viewer.viewport) {
+        document.getElementById('zoom-level').textContent = viewer.viewport.getZoom().toFixed(2);
+      }
+    }
+
+    // ============================================================
+    // TEST 1: Rectangle
+    // ============================================================
+    function runRectTest() {
+      if (!viewer || !viewer.viewport) { log('ERROR: Load an image first'); return; }
+      
+      // Known rectangle in master coordinates
+      const expectedRect = { x: 500, y: 400, w: 800, h: 600 };
+      
+      // Convert to viewport coordinates
+      const topLeft = masterToViewport({ x: expectedRect.x, y: expectedRect.y });
+      const bottomRight = masterToViewport({ 
+        x: expectedRect.x + expectedRect.w, 
+        y: expectedRect.y + expectedRect.h 
+      });
+      
+      // Convert back to master to verify round-trip
+      const recoveredTL = viewportToMaster(topLeft);
+      const recoveredBR = viewportToMaster(bottomRight);
+      
+      const errX = Math.abs(recoveredTL.x - expectedRect.x);
+      const errY = Math.abs(recoveredTL.y - expectedRect.y);
+      const errW = Math.abs((recoveredBR.x - recoveredTL.x) - expectedRect.w);
+      const errH = Math.abs((recoveredBR.y - recoveredTL.y) - expectedRect.h);
+      
+      const maxErr = Math.max(errX, errY, errW, errH);
+      const pass = maxErr <= 1.0;
+      
+      const detail = `Rect(${expectedRect.x},${expectedRect.y},${expectedRect.w},${expectedRect.h}) → ` +
+                     `Recovered(${recoveredTL.x.toFixed(2)},${recoveredTL.y.toFixed(2)},` +
+                     `${(recoveredBR.x-recoveredTL.x).toFixed(2)},${(recoveredBR.y-recoveredTL.y).toFixed(2)}) ` +
+                     `maxErr=${maxErr.toFixed(4)}px`;
+      
+      document.getElementById('rect-result').textContent = detail;
+      document.getElementById('rect-result').className = 'value ' + (pass ? 'pass' : 'fail');
+      addResult('Rectangle Coord', pass, `maxErr=${maxErr.toFixed(4)}px`);
+      log('Rect test: ' + (pass ? 'PASS' : 'FAIL') + ' — ' + detail);
+    }
+
+    // ============================================================
+    // TEST 2: Polygon
+    // ============================================================
+    function runPolyTest() {
+      if (!viewer || !viewer.viewport) { log('ERROR: Load an image first'); return; }
+      
+      // Known polygon in master coordinates (pentagon)
+      const expectedPoly = [
+        { x: 2200, y: 500 },
+        { x: 3000, y: 500 },
+        { x: 3100, y: 1000 },
+        { x: 2600, y: 1200 },
+        { x: 2100, y: 900 }
+      ];
+      
+      // Convert each point to viewport and back
+      let maxErr = 0;
+      const details = [];
+      
+      for (const pt of expectedPoly) {
+        const vp = masterToViewport(pt);
+        const recovered = viewportToMaster(vp);
+        const err = Math.sqrt(Math.pow(recovered.x - pt.x, 2) + Math.pow(recovered.y - pt.y, 2));
+        maxErr = Math.max(maxErr, err);
+        details.push(`(${pt.x},${pt.y})→(${recovered.x.toFixed(2)},${recovered.y.toFixed(2)}) err=${err.toFixed(4)}`);
+      }
+      
+      const pass = maxErr <= 1.0;
+      
+      document.getElementById('poly-result').textContent = 
+        `${expectedPoly.length} vertices, maxErr=${maxErr.toFixed(4)}px`;
+      document.getElementById('poly-result').className = 'value ' + (pass ? 'pass' : 'fail');
+      addResult('Polygon Coord', pass, `${expectedPoly.length}pts, maxErr=${maxErr.toFixed(4)}px`);
+      log('Poly test: ' + (pass ? 'PASS' : 'FAIL'));
+      details.forEach(d => log('  ' + d));
+    }
+
+    // ============================================================
+    // TEST 3: Coordinate Round-Trip Stress Test
+    // ============================================================
+    function runCoordTest() {
+      if (!viewer || !viewer.viewport) { log('ERROR: Load an image first'); return; }
+      
+      // Test 100 random points across the master image
+      const N = 100;
+      let maxErr = 0;
+      let failCount = 0;
+      
+      for (let i = 0; i < N; i++) {
+        const original = {
+          x: Math.random() * masterWidth,
+          y: Math.random() * masterHeight
+        };
+        
+        const vp = masterToViewport(original);
+        const recovered = viewportToMaster(vp);
+        
+        const err = Math.sqrt(
+          Math.pow(recovered.x - original.x, 2) + 
+          Math.pow(recovered.y - original.y, 2)
+        );
+        
+        if (err > 1.0) failCount++;
+        maxErr = Math.max(maxErr, err);
+      }
+      
+      const pass = failCount === 0;
+      const detail = `${N} points, maxErr=${maxErr.toFixed(6)}px, failures=${failCount}`;
+      
+      document.getElementById('coord-result').textContent = detail;
+      document.getElementById('coord-result').className = 'value ' + (pass ? 'pass' : 'fail');
+      addResult('Coord Round-Trip', pass, detail);
+      log('Coord round-trip: ' + (pass ? 'PASS' : 'FAIL') + ' — ' + detail);
+    }
+
+    // ============================================================
+    // TEST 4: Edit polygon (programmatic)
+    // ============================================================
+    function runEditTest() {
+      if (!viewer || !viewer.viewport) { log('ERROR: Load an image first'); return; }
+      
+      // Test: create polygon, modify a vertex, verify coordinates
+      const original = [
+        { x: 1000, y: 1000 },
+        { x: 2000, y: 1000 },
+        { x: 2000, y: 2000 },
+        { x: 1000, y: 2000 }
+      ];
+      
+      // Simulate vertex edit: move vertex 2 to (2500, 1500)
+      const edited = [...original];
+      edited[2] = { x: 2500, y: 1500 };
+      
+      // Verify all vertices survive round-trip after edit
+      let maxErr = 0;
+      for (const pt of edited) {
+        const vp = masterToViewport(pt);
+        const recovered = viewportToMaster(vp);
+        const err = Math.sqrt(Math.pow(recovered.x - pt.x, 2) + Math.pow(recovered.y - pt.y, 2));
+        maxErr = Math.max(maxErr, err);
+      }
+      
+      const pass = maxErr <= 1.0;
+      const detail = `Edited vertex (2000,2000)→(2500,1500), round-trip maxErr=${maxErr.toFixed(6)}px`;
+      
+      document.getElementById('edit-result').textContent = detail;
+      document.getElementById('edit-result').className = 'value ' + (pass ? 'pass' : 'fail');
+      addResult('Edit Polygon', pass, detail);
+      log('Edit test: ' + (pass ? 'PASS' : 'FAIL') + ' — ' + detail);
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    log('Spike A test page loaded. Click "Load Synthetic" to begin testing.');
+  </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+{
+  "page": "dense_02",
+  "width": 3000,
+  "height": 4000,
+  "category": "dense",
+  "regions": [
+    {
+      "x": 300,
+      "y": 400,
+      "width": 1100,
+      "height": 800,
+      "label": "illustration_1"
+    },
+    {
+      "x": 1600,
+      "y": 400,
+      "width": 1100,
+      "height": 800,
+      "label": "illustration_2"
+    },
+    {
+      "x": 300,
+      "y": 1500,
+      "width": 1100,
+      "height": 900,
+      "label": "illustration_3"
+    },
+    {
+      "x": 1600,
+      "y": 1500,
+      "width": 1100,
+      "height": 900,
+      "label": "illustration_4"
+    },
+    {
+      "x": 900,
+      "y": 2700,
+      "width": 1200,
+      "height": 950,
+      "label": "illustration_5"
+    }
+  ]
+}

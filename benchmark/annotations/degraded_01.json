@@ -1,0 +1,15 @@
+{
+  "page": "degraded_01",
+  "width": 3000,
+  "height": 4000,
+  "category": "degraded",
+  "regions": [
+    {
+      "x": 500,
+      "y": 800,
+      "width": 2000,
+      "height": 2200,
+      "label": "degraded_illustration"
+    }
+  ]
+}

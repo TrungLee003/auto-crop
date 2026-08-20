@@ -1,0 +1,22 @@
+{
+  "page": "sparse_02",
+  "width": 3000,
+  "height": 4000,
+  "category": "sparse",
+  "regions": [
+    {
+      "x": 600,
+      "y": 500,
+      "width": 1800,
+      "height": 1200,
+      "label": "illustration"
+    },
+    {
+      "x": 900,
+      "y": 2400,
+      "width": 1200,
+      "height": 900,
+      "label": "illustration"
+    }
+  ]
+}

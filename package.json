@@ -1,0 +1,29 @@
+{
+  "name": "illustration-extractor-monorepo",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Historical book illustration extractor monorepo",
+  "scripts": {
+    "dev": "powershell -ExecutionPolicy Bypass -File scripts/dev.ps1",
+    "setup": "powershell -ExecutionPolicy Bypass -File scripts/setup.ps1",
+    "build": "pnpm --filter illustration-extractor-frontend build",
+    "typecheck": "pnpm --filter illustration-extractor-frontend typecheck",
+    "lint": "pnpm --filter illustration-extractor-frontend lint",
+    "lint:fix": "pnpm --filter illustration-extractor-frontend lint:fix",
+    "format": "pnpm --filter illustration-extractor-frontend format",
+    "format:check": "pnpm --filter illustration-extractor-frontend format:check",
+    "test": "pnpm test:backend",
+    "test:backend": "cd backend && uv run python -m pytest tests/ -v",
+    "benchmark": "powershell -ExecutionPolicy Bypass -File scripts/benchmark.ps1",
+    "desktop": "cd apps/desktop && npx electron .",
+    "desktop:build": "pnpm build && cd apps/desktop && npx electron-builder --win",
+    "package": "powershell -ExecutionPolicy Bypass -File scripts/package_desktop.ps1"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "overrides": {
+      "tar": ">=7.5.21",
+      "cross-spawn": ">=7.0.6"
+    }
+  }
+}

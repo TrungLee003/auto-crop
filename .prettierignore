@@ -1,0 +1,14 @@
+dist/
+dist-desktop/
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+cache/
+exports/
+masters/
+sources/
+benchmark/pages/
+benchmark/annotations/
+coverage/
+.pytest_cache/

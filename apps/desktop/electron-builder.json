@@ -1,0 +1,22 @@
+{
+  "appId": "com.illustrationextractor.app",
+  "productName": "Illustration Extractor",
+  "directories": {
+    "output": "../../dist-desktop"
+  },
+  "files": [
+    "main.js",
+    "preload.js",
+    "package.json",
+    "../../frontend/dist/**/*"
+  ],
+  "win": {
+    "target": ["nsis", "portable"],
+    "icon": "icon.ico"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true
+  }
+}

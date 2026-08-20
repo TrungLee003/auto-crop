@@ -1,0 +1,15 @@
+{
+  "page": "text_heavy_01",
+  "width": 3000,
+  "height": 4000,
+  "category": "text_heavy",
+  "regions": [
+    {
+      "x": 300,
+      "y": 1200,
+      "width": 1050,
+      "height": 1200,
+      "label": "embedded_illustration"
+    }
+  ]
+}

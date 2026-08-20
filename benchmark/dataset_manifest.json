@@ -1,0 +1,72 @@
+[
+  {
+    "page": "sparse_01",
+    "category": "sparse",
+    "image_path": "S:\\Code\\Auto crop\\benchmark\\pages\\sparse_01.png",
+    "annotation_path": "S:\\Code\\Auto crop\\benchmark\\annotations\\sparse_01.json",
+    "ground_truth_count": 2
+  },
+  {
+    "page": "sparse_02",
+    "category": "sparse",
+    "image_path": "S:\\Code\\Auto crop\\benchmark\\pages\\sparse_02.png",
+    "annotation_path": "S:\\Code\\Auto crop\\benchmark\\annotations\\sparse_02.json",
+    "ground_truth_count": 2
+  },
+  {
+    "page": "dense_01",
+    "category": "dense",
+    "image_path": "S:\\Code\\Auto crop\\benchmark\\pages\\dense_01.png",
+    "annotation_path": "S:\\Code\\Auto crop\\benchmark\\annotations\\dense_01.json",
+    "ground_truth_count": 5
+  },
+  {
+    "page": "dense_02",
+    "category": "dense",
+    "image_path": "S:\\Code\\Auto crop\\benchmark\\pages\\dense_02.png",
+    "annotation_path": "S:\\Code\\Auto crop\\benchmark\\annotations\\dense_02.json",
+    "ground_truth_count": 5
+  },
+  {
+    "page": "text_heavy_01",
+    "category": "text_heavy",
+    "image_path": "S:\\Code\\Auto crop\\benchmark\\pages\\text_heavy_01.png",
+    "annotation_path": "S:\\Code\\Auto crop\\benchmark\\annotations\\text_heavy_01.json",
+    "ground_truth_count": 1
+  },
+  {
+    "page": "text_heavy_02",
+    "category": "text_heavy",
+    "image_path": "S:\\Code\\Auto crop\\benchmark\\pages\\text_heavy_02.png",
+    "annotation_path": "S:\\Code\\Auto crop\\benchmark\\annotations\\text_heavy_02.json",
+    "ground_truth_count": 1
+  },
+  {
+    "page": "degraded_01",
+    "category": "degraded",
+    "image_path": "S:\\Code\\Auto crop\\benchmark\\pages\\degraded_01.png",
+    "annotation_path": "S:\\Code\\Auto crop\\benchmark\\annotations\\degraded_01.json",
+    "ground_truth_count": 1
+  },
+  {
+    "page": "degraded_02",
+    "category": "degraded",
+    "image_path": "S:\\Code\\Auto crop\\benchmark\\pages\\degraded_02.png",
+    "annotation_path": "S:\\Code\\Auto crop\\benchmark\\annotations\\degraded_02.json",
+    "ground_truth_count": 1
+  },
+  {
+    "page": "mixed_01",
+    "category": "mixed",
+    "image_path": "S:\\Code\\Auto crop\\benchmark\\pages\\mixed_01.png",
+    "annotation_path": "S:\\Code\\Auto crop\\benchmark\\annotations\\mixed_01.json",
+    "ground_truth_count": 2
+  },
+  {
+    "page": "mixed_02",
+    "category": "mixed",
+    "image_path": "S:\\Code\\Auto crop\\benchmark\\pages\\mixed_02.png",
+    "annotation_path": "S:\\Code\\Auto crop\\benchmark\\annotations\\mixed_02.json",
+    "ground_truth_count": 2
+  }
+]

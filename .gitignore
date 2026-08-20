@@ -1,0 +1,64 @@
+# ===========================
+# Illustration Extractor
+# ===========================
+
+# ----- Python -----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+*.whl
+.venv/
+venv/
+env/
+.uv/
+
+# ----- Node / Frontend -----
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# ----- IDE -----
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+
+# ----- OS -----
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ----- Project runtime -----
+# Project data directories (created by the tool at runtime)
+# Do NOT commit user project data
+*.log
+logs/
+projects/
+cache/
+scratch/
+scripts/spikes/output/
+
+# ----- Environment -----
+.env
+.env.local
+.env.*.local
+
+# ----- Test -----
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
+
+# ----- Build artifacts -----
+*.exe
+*.msi
+apps/desktop/out/
+apps/desktop/dist/

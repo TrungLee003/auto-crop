@@ -1,0 +1,15 @@
+{
+  "name": "illustration-extractor-desktop",
+  "version": "2.0.0",
+  "description": "Desktop application for historical book illustration extraction",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^39.8.10",
+    "electron-builder": "^26.15.0"
+  }
+}

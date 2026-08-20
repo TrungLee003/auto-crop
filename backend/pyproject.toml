@@ -1,0 +1,30 @@
+[project]
+name = "illustration-extractor-backend"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.23.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "opencv-python-headless>=4.8.0",
+    "numpy>=1.24.0",
+    "pyvips>=2.2.1",
+    "shapely>=2.0.0",
+    "scikit-image>=0.21.0",
+    "scipy>=1.11.0",
+    "python-multipart>=0.0.6",
+    "aiofiles>=23.2.0",
+    "vtracer>=0.6.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.24.0",
+    "ruff>=0.0.280"
+]
+
+[tool.ruff]
+line-length = 100
